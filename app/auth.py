@@ -4,6 +4,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
+from urllib.parse import parse_qsl
 import jwt
 from app.config import settings
 
@@ -15,11 +16,9 @@ def verify_telegram_init_data(init_data: str, bot_token: str) -> Optional[dict]:
     Verify Telegram InitData signature
     """
     try:
-        # Parse init_data
-        pairs = {}
-        for pair in init_data.split("&"):
-            key, value = pair.split("=", 1)
-            pairs[key] = value
+        # Parse init_data (query-string encodee : les valeurs doivent etre URL-decodees
+        # avant de reconstruire le check_string, sinon le hash ne correspondra jamais)
+        pairs = dict(parse_qsl(init_data, keep_blank_values=True))
 
         # Extract hash
         hash_value = pairs.pop("hash", None)
