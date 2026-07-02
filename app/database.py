@@ -24,7 +24,6 @@ engine = create_async_engine(
         # Sans ca, des erreurs "InvalidCachedStatementError" peuvent survenir
         # apres tout changement de schema (ALTER TABLE, etc.) ou de facon aleatoire.
         "statement_cache_size": 0,
-        "prepared_statement_cache_size": 0,
     },
 )
 
