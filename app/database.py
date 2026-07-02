@@ -1,4 +1,5 @@
 import logging
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -18,13 +19,6 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
-    connect_args={
-        # Le endpoint Neon utilise le pooler PgBouncer (suffixe "-pooler" dans l'hote),
-        # qui ne supporte pas correctement les requetes preparees cotes serveur.
-        # Sans ca, des erreurs "InvalidCachedStatementError" peuvent survenir
-        # apres tout changement de schema (ALTER TABLE, etc.) ou de facon aleatoire.
-        "statement_cache_size": 0,
-    },
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -36,6 +30,11 @@ async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Migration: telegram_id must be BIGINT (Telegram IDs exceed int32)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text("ALTER TABLE users ALTER COLUMN telegram_id TYPE BIGINT")
+        )
     logger.info("Database tables created")
 
 
