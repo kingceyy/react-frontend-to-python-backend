@@ -1,4 +1,5 @@
 import logging
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -29,6 +30,11 @@ async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Migration: telegram_id must be BIGINT (Telegram IDs exceed int32)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text("ALTER TABLE users ALTER COLUMN telegram_id TYPE BIGINT")
+        )
     logger.info("Database tables created")
 
 
