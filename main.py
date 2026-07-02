@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 
 from app.api import router as api_router
 from app.database import init_db
+from app.bot import bot, dp
 
 load_dotenv()
 
@@ -22,9 +24,23 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up...")
     await init_db()
     logger.info("Database initialized")
+
+    # Retire un éventuel webhook résiduel avant de passer en polling
+    await bot.delete_webhook(drop_pending_updates=True)
+
+    polling_task = asyncio.create_task(dp.start_polling(bot))
+    logger.info("Bot polling started")
+
     yield
+
     # Shutdown
     logger.info("Shutting down...")
+    polling_task.cancel()
+    try:
+        await polling_task
+    except asyncio.CancelledError:
+        pass
+    await bot.session.close()
 
 
 app = FastAPI(title="Club JM API", lifespan=lifespan)
