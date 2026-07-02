@@ -10,4 +10,4 @@ pydantic-settings==2.1.0
 httpx==0.25.2
 aiogram==3.3.0
 cryptography==41.0.7
-pyjwt==2.8.1
+pyjwt==2.9.0
