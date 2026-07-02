@@ -18,6 +18,14 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
+    connect_args={
+        # Le endpoint Neon utilise le pooler PgBouncer (suffixe "-pooler" dans l'hote),
+        # qui ne supporte pas correctement les requetes preparees cotes serveur.
+        # Sans ca, des erreurs "InvalidCachedStatementError" peuvent survenir
+        # apres tout changement de schema (ALTER TABLE, etc.) ou de facon aleatoire.
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    },
 )
 
 AsyncSessionLocal = async_sessionmaker(
