@@ -58,7 +58,9 @@ app.add_middleware(
 app.include_router(api_router)
 
 
-@app.get("/health")
+# GET + HEAD explicites : UptimeRobot (et la plupart des monitors) envoient
+# des requêtes HEAD, qui sans ça renvoient 405 Method Not Allowed sur Koyeb.
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
 
