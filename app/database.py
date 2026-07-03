@@ -35,6 +35,13 @@ async def init_db():
         await conn.execute(
             text("ALTER TABLE users ALTER COLUMN telegram_id TYPE BIGINT")
         )
+    # Migration: colonne is_validated sur coupons (checkbox "Validé" admin)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "ALTER TABLE coupons ADD COLUMN IF NOT EXISTS is_validated BOOLEAN NOT NULL DEFAULT FALSE"
+            )
+        )
     logger.info("Database tables created")
 
 
