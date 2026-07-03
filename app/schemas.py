@@ -117,3 +117,4 @@ class AuthRequest(BaseModel):
 class AuthResponse(BaseModel):
     token: str
     profile: UserProfile
+    is_member: bool = True
