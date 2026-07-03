@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, Coupon, CouponUsage
 from app.schemas import AdminStats
@@ -163,12 +163,45 @@ async def get_coupon_by_id(session: AsyncSession, coupon_id: str) -> Coupon | No
     return result.scalars().first()
 
 
+async def set_coupon_validated(
+    session: AsyncSession,
+    coupon_id: str,
+    validated: bool = True,
+) -> bool:
+    """Marque un coupon comme validé (ou non) par l'admin.
+
+    C'est un flag global sur le coupon (affiche le filigrane 'Validé'),
+    independant de l'historique d'utilisation par utilisateur.
+    """
+    coupon = await get_coupon_by_id(session, coupon_id)
+    if not coupon:
+        return False
+
+    coupon.is_validated = validated
+    session.add(coupon)
+    await session.commit()
+    return True
+
+
+async def delete_coupon(session: AsyncSession, coupon_id: str) -> bool:
+    """Supprime totalement un coupon (et son historique d'utilisation lié)."""
+    coupon = await get_coupon_by_id(session, coupon_id)
+    if not coupon:
+        return False
+
+    # On supprime d'abord les usages liés pour respecter la contrainte FK
+    await session.execute(delete(CouponUsage).where(CouponUsage.coupon_id == coupon_id))
+    await session.delete(coupon)
+    await session.commit()
+    return True
+
+
 async def validate_coupon(
     session: AsyncSession,
     coupon_id: str,
     user_id: int,
 ) -> bool:
-    """Validate coupon for user"""
+    """Enregistre l'utilisation d'un coupon par un utilisateur (historique perso)."""
     coupon = await get_coupon_by_id(session, coupon_id)
     if not coupon:
         return False
