@@ -47,6 +47,7 @@ class CouponResponse(BaseModel):
     expires_at: Optional[datetime] = None
     quantity_left: Optional[int] = None
     locked: bool
+    is_validated: bool = False
     created_at: datetime
 
     class Config:
