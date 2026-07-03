@@ -90,17 +90,15 @@ async def get_user_by_referral_code(session: AsyncSession, code: str) -> User | 
 
 async def add_referral(
     session: AsyncSession,
-    referrer_id: int,
-    referee_id: int,
+    referrer: User,
+    referee: User,
 ) -> bool:
-    """Add a referral"""
-    referrer = await get_user_by_id(session, referrer_id)
-    referee = await get_user_by_id(session, referee_id)
-
+    """Add a referral. referrer_id (FK) doit pointer vers users.id (PK interne),
+    pas vers telegram_id — d'ou l'usage direct des objets User deja charges."""
     if not referrer or not referee or referee.referrer_id:
         return False
 
-    referee.referrer_id = referrer_id
+    referee.referrer_id = referrer.id
     referrer.total_invites += 1
     referrer.active_invites += 1
 
