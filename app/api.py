@@ -84,13 +84,17 @@ async def auth_telegram(
         ref_code = request.start_param[4:]
         referrer = await crud.get_user_by_referral_code(session, ref_code)
         if referrer and user.referrer_id is None and referrer.id != user.id:
-            await crud.add_referral(session, referrer.telegram_id, user.telegram_id)
+            await crud.add_referral(session, referrer, user)
 
     token = create_jwt_token(user.telegram_id)
+
+    from app.bot import check_user_subscription
+    is_member = await check_user_subscription(user.telegram_id)
 
     return AuthResponse(
         token=token,
         profile=_user_to_profile(user),
+        is_member=is_member,
     )
 
 
