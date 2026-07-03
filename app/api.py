@@ -243,19 +243,53 @@ async def admin_create_coupon(
     return coupon
 
 
-@router.patch("/admin/coupons/{coupon_id}/validate")
+@router.patch("/admin/coupons/{coupon_id}/validate", response_model=CouponResponse)
 async def admin_validate_coupon(
     coupon_id: str,
     user = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """Validate coupon (admin only)"""
+    """Marque le coupon comme validé (filigrane 'Validé' côté front)"""
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin only")
 
-    success = await crud.validate_coupon(session, coupon_id, user.id)
+    success = await crud.set_coupon_validated(session, coupon_id, True)
     if not success:
-        raise HTTPException(status_code=400, detail="Failed to validate coupon")
+        raise HTTPException(status_code=404, detail="Coupon introuvable")
+
+    return await crud.get_coupon_by_id(session, coupon_id)
+
+
+@router.patch("/admin/coupons/{coupon_id}/unvalidate", response_model=CouponResponse)
+async def admin_unvalidate_coupon(
+    coupon_id: str,
+    user = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Retire le statut validé d'un coupon"""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    success = await crud.set_coupon_validated(session, coupon_id, False)
+    if not success:
+        raise HTTPException(status_code=404, detail="Coupon introuvable")
+
+    return await crud.get_coupon_by_id(session, coupon_id)
+
+
+@router.delete("/admin/coupons/{coupon_id}")
+async def admin_delete_coupon(
+    coupon_id: str,
+    user = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Supprime totalement un coupon (admin only)"""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    success = await crud.delete_coupon(session, coupon_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Coupon introuvable")
 
     return {"ok": True}
 
