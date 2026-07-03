@@ -70,6 +70,7 @@ class Coupon(Base):
 
     # Status
     locked = Column(Boolean, default=False)
+    is_validated = Column(Boolean, default=False, nullable=False)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -97,5 +98,3 @@ class CouponUsage(Base):
 
     def __repr__(self):
         return f"<CouponUsage {self.coupon_id} {self.user_id}>"
-
-    
